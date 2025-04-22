@@ -11,7 +11,10 @@ from selenium.webdriver.common.by import By
 import pandas as pd
 import time
 
-#strategy interface
+''' Strategy Design interface as different websites
+    require different behavior to successfully scrape
+    information.
+'''
 class WebsiteStrategy(ABC):
     driver_options = Options() #allows for options to be used with the driver
     driver_options.headless = True  # Run in headless mode (no GUI)
@@ -31,10 +34,11 @@ class WebsiteStrategy(ABC):
 
 class ArrCOAnimalShelter(WebsiteStrategy):
     def __init__(self):
-        self.link = "https://arrcolorado.org/dogs/"
+        self.link = ("https://arrcolorado.org/dogs/", "https://arrcolorado.org/cats/") #this website has different sections for dogs and cats
+
 
     def scrape(self):
-        self.driver.get(self.link)
+        self.driver.get(self.link[0])
         
         animal_table = self.driver.find_elements(By.XPATH, "/html/body/div/div[2]/div/article/div/div/div/div/div/div/div[2]/div/div/div[1]/table/tbody")
 
@@ -56,7 +60,31 @@ class ArrCOAnimalShelter(WebsiteStrategy):
 
                 counter += 1
 
-        print("Finished scraping process")
+        print("Finished scraping process for Dogs")
+
+        self.driver.get(self.link[1])
+        
+        animal_table = self.driver.find_elements(By.XPATH, "/html/body/div/div[2]/div/article/div/div/div/div/div/div/div[2]/div/div/div[1]/table/tbody")
+
+        '''for this website -
+             every first row is the animal's personal info (name, picture)
+             and second row is the breed information'''
+
+        counter = 1
+
+        for animal_string in animal_table:
+            animal_list = animal_string.text.split('\n')
+
+            for animals in animal_list:
+                if counter % 2 == 1:
+                    name = animals
+                else:
+                    breed = animals
+                    print(f"Name: {name} Breed: {breed}")
+
+                counter += 1
+
+        print("Finished scraping process for Cats")
         
         #close the browser window
         self.driver.quit()
@@ -104,6 +132,7 @@ def main():
    
     print("Start scraping program")
     
+    #start scraping Animal Rescue of the Rockies Shelter for information
     ArrCO_scraper = WebsiteProcessor(ArrCOAnimalShelter())
     ArrCO_scraper.scrape_website()
 
