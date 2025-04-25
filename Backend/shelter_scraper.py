@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+import json
 import requests
 import webbrowser
 import httpx
@@ -40,27 +41,46 @@ class ArrCOAnimalShelter(WebsiteStrategy):
     def scrape(self):
         self.driver.get(self.link[0])
         
-        animal_table = self.driver.find_elements(By.XPATH, "/html/body/div/div[2]/div/article/div/div/div/div/div/div/div[2]/div/div/div[1]/table/tbody")
+        #create a dictionary to store the animal information
+        dog_dict = {}
 
-        '''for this website -
-             every first row is the animal's personal info (name, picture)
-             and second row is the breed information'''
-
-        counter = 1
-
-        for animal_string in animal_table:
-            animal_list = animal_string.text.split('\n')
-
-            for animals in animal_list:
-                if counter % 2 == 1:
-                    name = animals
+        #find table rows with the animal information
+        animal_table = self.driver.find_elements(By.CSS_SELECTOR, "td")
+        td_counter = 0
+        animal_id = 1
+        for animal in animal_table:
+            #the first two entries in the animal table are not animal information
+            #so we skip them
+            if (td_counter >= 2):
+                animal_info = animal.text.split('\n')
+                if (animal_info[0] == ""):
+                    #if the first entry is empty, we skip it
+                    continue
                 else:
-                    breed = animals
-                    print(f"Name: {name} Breed: {breed}")
+                    animal_key = f"arrco_dog_{animal_id}"
+                    animal_id += 1
+                    animal_name = animal_info[0]
+                    animal_breed = animal_info[1]
 
-                counter += 1
+                    #get src of the animal picture
+                    animal_picture_link = animal.find_element(By.CSS_SELECTOR, "img").get_attribute("src")
 
+                    #add the animal information to the dictionary
+                    dog_dict[animal_key] = {
+                        "name": animal_name,
+                        "breed": animal_breed,
+                        "picture": animal_picture_link
+                    }
+
+            #increment the animal table counter
+            td_counter += 1
+            
         print("Finished scraping process for Dogs")
+
+        #turn the dictionary into a JSON object
+        dog_json = json.dumps(dog_dict, indent=4)
+        print("Dog JSON: ", dog_json)
+        
 
         self.driver.get(self.link[1])
         
@@ -70,21 +90,45 @@ class ArrCOAnimalShelter(WebsiteStrategy):
              every first row is the animal's personal info (name, picture)
              and second row is the breed information'''
 
-        counter = 1
+       #create a dictionary to store the animal information
+        cat_dict = {}
 
-        for animal_string in animal_table:
-            animal_list = animal_string.text.split('\n')
-
-            for animals in animal_list:
-                if counter % 2 == 1:
-                    name = animals
+        #find table rows with the animal information
+        animal_table = self.driver.find_elements(By.CSS_SELECTOR, "td")
+        td_counter = 0
+        animal_id = 1
+        for animal in animal_table:
+            #the first two entries in the animal table are not animal information
+            #so we skip them
+            if (td_counter >= 2):
+                animal_info = animal.text.split('\n')
+                if (animal_info[0] == ""):
+                    #if the first entry is empty, we skip it
+                    continue
                 else:
-                    breed = animals
-                    print(f"Name: {name} Breed: {breed}")
+                    animal_key = f"arrco_cat_{animal_id}"
+                    animal_id += 1
+                    animal_name = animal_info[0]
+                    animal_breed = animal_info[1]
 
-                counter += 1
+                    #get src of the animal picture
+                    animal_picture_link = animal.find_element(By.CSS_SELECTOR, "img").get_attribute("src")
 
+                    #add the animal information to the dictionary
+                    cat_dict[animal_key] = {
+                        "name": animal_name,
+                        "breed": animal_breed,
+                        "picture": animal_picture_link
+                    }
+
+            #increment the animal table counter
+            td_counter += 1
+            
         print("Finished scraping process for Cats")
+
+        #turn the dictionary into a JSON object
+        cat_json = json.dumps(cat_dict, indent=4)
+        print("Cat JSON: ", cat_json)
         
         #close the browser window
         self.driver.quit()
