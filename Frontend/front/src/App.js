@@ -1,10 +1,15 @@
 import React from "react";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Navbar from "./components/Navbar";
-import SearchHero from "./components/SearchHero";
+import SearchForm from "./components/SearchForm";
 import PetCard from "./components/PetCard";
+import SearchPage from "./pages/SearchPage";
+import SignUpPage from "./pages/SignUpPage";
+import LoginPage from "./pages/LoginPage";
+import ProfilePage from "./pages/ProfilePage";
 import "./App.css";
 
-// Dummy data for pets
+// Define your dummy pet data
 const pets = [
   {
     name: "Bella",
@@ -34,15 +39,28 @@ const pets = [
 
 function App() {
   return (
-    <div>
+    <Router>
       <Navbar />
-      <SearchHero />
-      <div className="pet-grid">
-        {pets.map((pet, index) => (
-          <PetCard key={index} pet={pet} />
-        ))}
-      </div>
-    </div>
+      <Routes>
+        <Route
+          path="/"
+          element={
+            <>
+              <SearchForm />
+              <div className="pet-grid">
+                {pets.map((pet, index) => (
+                  <PetCard key={index} pet={pet} />
+                ))}
+              </div>
+            </>
+          }
+        />
+        <Route path="/search" element={<SearchPage pets={pets} />} />
+        <Route path="/signup" element={<SignUpPage />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/profile" element={<ProfilePage />} />
+      </Routes>
+    </Router>
   );
 }
 
