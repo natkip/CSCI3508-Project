@@ -1,12 +1,12 @@
 require('dotenv').config();
 const express = require('express');
+const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const passport = require('passport');
 const jwt = require('jsonwebtoken');
 const cors = require('cors');
-const User = require('./users');
+const User = require('./user');
 const Movie = require('./pet'); 
-
 const app = express();
 app.use(cors());
 app.use(bodyParser.json());
@@ -17,6 +17,14 @@ app.use(passport.initialize());
 const router = express.Router();
 
 // Removed getJSONObjectForMovieRequirement as it's not used
+
+//Connects server to MongoDB
+mongoose.connect(process.env.DB, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+})
+.then(() => console.log('Connected to MongoDB'))
+.catch((err) => console.error('MongoDB connection error:', err));
 
 router.post('/signup', async (req, res) => { // Use async/await
   if (!req.body.username || !req.body.password) {
