@@ -22,6 +22,64 @@ class WebsiteStrategy(ABC):
     @abstractmethod
     def scrape(self):
         raise NotImplementedError("Subclasses must implement the scrape method!")
+class DenverAnimalShelterScraper(WebsiteStrategy):
+    def __init__(self):
+        self.link = "https://www.denvergov.org/Government/Agencies-Departments-Offices/Animal-Shelter/Adopt-a-Pet/Adoptable-Pets-Online"
+        self.api_url = "http://localhost:8080/api/pets"  # REPLACE WITH YOUR RENDER LINK WHEN READY
+
+    def scrape(self):
+        self.driver.get(self.link)
+        print(f"Scraping: {self.link}")
+
+        time.sleep(3)  # Wait for page to fully load (because it's a little slower)
+
+        pets_uploaded = 0
+
+        try:
+            cards = self.driver.find_elements(By.CLASS_NAME, "animal-card")  # Denver uses animal-card class
+            print(f"Found {len(cards)} pet entries on page.")
+
+            for card in cards:
+                try:
+                    name_element = card.find_element(By.CLASS_NAME, "card-title")
+                    name = name_element.text.strip()
+
+                    image_element = card.find_element(By.TAG_NAME, "img")
+                    image_url = image_element.get_attribute("src")
+
+                    breed_element = card.find_element(By.CLASS_NAME, "animal-breed")
+                    breed = breed_element.text.strip()
+
+                    species_element = card.find_element(By.CLASS_NAME, "animal-species")
+                    species = species_element.text.strip()
+
+                    pet_data = {
+                        "name": name,
+                        "species": species if species else "Unknown",
+                        "breed": breed if breed else "Unknown",
+                        "gender": "Unknown",
+                        "description": "No description available",
+                        "imageUrl": image_url,
+                        "available": True,
+                        "shelter": {
+                            "name": "Denver Animal Shelter",
+                            "location": "Denver, CO",
+                            "contactEmail": "DAPTransfers@denvergov.org"
+                        }
+                    }
+
+                    response = requests.post(self.api_url, json=pet_data)
+                    print(f"Uploaded {species} {name}: {response.status_code}")
+                    pets_uploaded += 1
+
+                except Exception as e:
+                    print(f"Error uploading pet: {e}")
+
+        except Exception as e:
+            print(f"Error scraping Denver Animal Shelter: {e}")
+
+        print(f"Finished uploading {pets_uploaded} pets from Denver Animal Shelter.")
+        self.driver.quit()
 
 class ArrCOAnimalShelter(WebsiteStrategy):
     def __init__(self):
@@ -99,8 +157,19 @@ class WebsiteProcessor:
 
 def main():
     print("Start scraping program...")
-    ArrCO_scraper = WebsiteProcessor(ArrCOAnimalShelter())
-    ArrCO_scraper.scrape_website()
+
+    # Scrape ARR Colorado
+    print("\n--- Scraping ARR Colorado ---")
+    arrco_scraper = WebsiteProcessor(ArrCOAnimalShelter())
+    arrco_scraper.scrape_website()
+
+    # Scrape Denver Animal Shelter
+    print("\n--- Scraping Denver Animal Shelter ---")
+    denver_scraper = WebsiteProcessor(DenverAnimalShelterScraper())
+    denver_scraper.scrape_website()
+
+    print("\nFinished scraping all shelters!")
+
 
 if __name__ == "__main__":
     main()
